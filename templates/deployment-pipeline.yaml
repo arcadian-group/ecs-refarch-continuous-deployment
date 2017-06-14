@@ -1,14 +1,14 @@
 Parameters:
-  GitHubRepo:
+  S3Bucket:
     Type: String
 
-  GitHubBranch:
+  SourceS3Key:
     Type: String
 
-  GitHubToken:
+  ProjectName:
     Type: String
 
-  GitHubUser:
+  Branch:
     Type: String
 
   TargetGroup:
@@ -23,6 +23,7 @@ Parameters:
 
 Resources:
   Repository:
+    RepositoryName: !Join [ "/", [ !Ref ProjectName, !Ref Branch ] ]
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
 
@@ -181,14 +182,12 @@ Resources:
             - Name: App
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
+                Owner: AWS
                 Version: 1
-                Provider: GitHub
+                Provider: S3
               Configuration:
-                Owner: !Ref GitHubUser
-                Repo: !Ref GitHubRepo
-                Branch: !Ref GitHubBranch
-                OAuthToken: !Ref GitHubToken
+                S3Bucket: !Ref 'S3Bucket'
+                S3ObjectKey: !Ref 'SourceS3Key'
               OutputArtifacts:
                 - Name: App
               RunOrder: 1
@@ -219,33 +218,33 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1
-        - Name: Deploy
-          Actions:
-            - Name: Deploy
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Version: 1
-                Provider: CloudFormation
-              Configuration:
-                ChangeSetName: Deploy
-                ActionMode: CREATE_UPDATE
-                StackName: !Sub "${AWS::StackName}-Service"
-                Capabilities: CAPABILITY_NAMED_IAM
-                TemplatePath: Template::templates/service.yaml
-                RoleArn: !GetAtt CloudFormationExecutionRole.Arn
-                ParameterOverrides: !Sub |
-                  {
-                    "Tag" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "tag" ] },
-                    "DesiredCount": "1",
-                    "Cluster": "${Cluster}",
-                    "TargetGroup": "${TargetGroup}",
-                    "Repository": "${Repository}"
-                  }
-              InputArtifacts:
-                - Name: Template
-                - Name: BuildOutput
-              RunOrder: 1
+        # - Name: Deploy
+        #   Actions:
+        #     - Name: Deploy
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Version: 1
+        #         Provider: CloudFormation
+        #       Configuration:
+        #         ChangeSetName: Deploy
+        #         ActionMode: CREATE_UPDATE
+        #         StackName: !Sub "${AWS::StackName}-Service"
+        #         Capabilities: CAPABILITY_NAMED_IAM
+        #         TemplatePath: Template::templates/service.yaml
+        #         RoleArn: !GetAtt CloudFormationExecutionRole.Arn
+        #         ParameterOverrides: !Sub |
+        #           {
+        #             "Tag" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "tag" ] },
+        #             "DesiredCount": "1",
+        #             "Cluster": "${Cluster}",
+        #             "TargetGroup": "${TargetGroup}",
+        #             "Repository": "${Repository}"
+        #           }
+        #       InputArtifacts:
+        #         - Name: Template
+        #         - Name: BuildOutput
+        #       RunOrder: 1
 
 
 Outputs:
