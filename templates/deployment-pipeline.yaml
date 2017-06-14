@@ -82,7 +82,9 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:GetObjectVersion
-              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+              - Resource:
+                  - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+                  - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/base/wordpress
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -114,6 +116,8 @@ Resources:
                   - !Sub arn:aws:s3:::${ArtifactBucket}/*
                   - !Sub arn:aws:s3:::${TemplateBucket}
                   - !Sub arn:aws:s3:::${TemplateBucket}/*
+                  - !Sub arn:aws:s3:::${S3Bucket}
+                  - !Sub arn:aws:s3:::${S3Bucket}/*
                 Effect: Allow
                 Action:
                   - s3:PutObject
