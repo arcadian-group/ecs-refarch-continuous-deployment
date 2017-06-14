@@ -5,15 +5,6 @@ Parameters:
   SourceS3Key:
     Type: String
 
-  # ProjectName:
-  #   Type: String
-
-  # Branch:
-  #   Type: String
-
-  # TargetGroup:
-  #   Type: String
-
   Cluster:
     Type: String
 
@@ -23,7 +14,6 @@ Parameters:
 
 Resources:
   Repository:
-    # RepositoryName: !Join [ "/", [ !Ref ProjectName, !Ref Branch ] ]
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
 
@@ -152,13 +142,17 @@ Resources:
               commands:
                 - $(aws ecr get-login)
                 - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+                - apt-get update && apt-get install jq -y
             build:
               commands:
                 - docker build --tag "${REPOSITORY_URI}:${TAG}" .
             post_build:
               commands:
                 - docker push "${REPOSITORY_URI}:${TAG}"
-                - printf '{"tag":"%s"}' $TAG > build.json
+                # TODO: Remove hardcoded taskdef
+                - sed -i "s/{{IMAGE}}/${REPOSITORY_URI}:${TAG}/g" taskdef-staging.json
+                - TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://taskdef-staging.json | jq -r '.taskDefinition.taskDefinitionArn')
+                - printf '{"tag":"%s"}' $TAG $TASK_DEF > build.json
           artifacts:
             files: build.json
       Environment:
@@ -222,34 +216,33 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1
-        # - Name: Deploy
-        #   Actions:
-        #     - Name: Deploy
-        #       ActionTypeId:
-        #         Category: Deploy
-        #         Owner: AWS
-        #         Version: 1
-        #         Provider: CloudFormation
-        #       Configuration:
-        #         ChangeSetName: Deploy
-        #         ActionMode: CREATE_UPDATE
-        #         StackName: !Sub "${AWS::StackName}-Service"
-        #         Capabilities: CAPABILITY_NAMED_IAM
-        #         TemplatePath: Template::templates/service.yaml
-        #         RoleArn: !GetAtt CloudFormationExecutionRole.Arn
-        #         ParameterOverrides: !Sub |
-        #           {
-        #             "Tag" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "tag" ] },
-        #             "DesiredCount": "1",
-        #             "Cluster": "${Cluster}",
-        #             "TargetGroup": "${TargetGroup}",
-        #             "Repository": "${Repository}"
-        #           }
-        #       InputArtifacts:
-        #         - Name: Template
-        #         - Name: BuildOutput
-        #       RunOrder: 1
-
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ChangeSetName: Deploy
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${AWS::StackName}-Service"
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: Template::templates/service.yaml
+                RoleArn: !GetAtt CloudFormationExecutionRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "Tag" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "tag" ] },
+                    "DesiredCount": "1",
+                    "Cluster": "${Cluster}",
+                    "Repository": "${Repository}",
+                    "TaskDefinition" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "task-def" ] 
+                  }
+              InputArtifacts:
+                - Name: Template
+                - Name: BuildOutput
+              RunOrder: 1
 
 Outputs:
   PipelineUrl:
