@@ -39,7 +39,7 @@ Resources:
     Properties:
       TemplateURL: https://s3.amazonaws.com/arc-ecs-cont-deployment/templates/deployment-pipeline.yaml
       Parameters:
-        Cluster: !GetAtt Cluster.Outputs.ClusterName
+        Cluster: !Ref Cluster
         S3Bucket: !Ref S3Bucket
         SourceS3Key: !Ref SourceS3Key
         TemplateBucket: !Sub arc-ecs-cont-deployment-${AWS::Region}
