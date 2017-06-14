@@ -5,14 +5,14 @@ Parameters:
   SourceS3Key:
     Type: String
 
-  ProjectName:
-    Type: String
+  # ProjectName:
+  #   Type: String
 
-  Branch:
-    Type: String
+  # Branch:
+  #   Type: String
 
-  TargetGroup:
-    Type: String
+  # TargetGroup:
+  #   Type: String
 
   Cluster:
     Type: String
@@ -23,7 +23,7 @@ Parameters:
 
 Resources:
   Repository:
-    RepositoryName: !Join [ "/", [ !Ref ProjectName, !Ref Branch ] ]
+    # RepositoryName: !Join [ "/", [ !Ref ProjectName, !Ref Branch ] ]
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
 
