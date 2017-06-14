@@ -22,9 +22,9 @@ Metadata:
       Cluster:
         default: "Staging"
       S3Bucket:
-        default: ""
+        default: "bitbucket-codeclimate-outputbucket-gmjmaqu04wuz"
       SourceS3Key:
-        default: ""
+        default: "ArcadianDigital/mysmileplan/develop/ArcadianDigital_mysmileplan.zip"
     ParameterGroups:
       - Label:
           default: Configuration
