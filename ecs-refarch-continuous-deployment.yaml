@@ -37,7 +37,7 @@ Resources:
   DeploymentPipeline:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/arc-ecs-cont-deployment/templates/deployment-pipeline.yaml
+      TemplateURL: https://s3.amazonaws.com/arc-ecs-cont-deployment-ap-southeast-2/templates/deployment-pipeline.yaml
       Parameters:
         Cluster: !Ref Cluster
         S3Bucket: !Ref S3Bucket
