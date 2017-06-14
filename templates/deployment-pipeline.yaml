@@ -11,7 +11,6 @@ Parameters:
   TemplateBucket:
     Type: String
 
-
 Resources:
   Repository:
     Type: AWS::ECR::Repository
@@ -150,9 +149,10 @@ Resources:
               commands:
                 - docker push "${REPOSITORY_URI}:${TAG}"
                 # TODO: Remove hardcoded taskdef
-                - sed -i "s/{{IMAGE}}/${REPOSITORY_URI}:${TAG}/g" taskdef-staging.json
+                - FULL_IMAGE=$(echo "${REPOSITORY_URI}:${TAG}" | sed 's/\//\\\//g')
+                - sed -i "s/{{IMAGE}}/${FULL_IMAGE}/g" taskdef-staging.json
                 - TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://taskdef-staging.json | jq -r '.taskDefinition.taskDefinitionArn')
-                - printf '{"tag":"%s"}' $TAG $TASK_DEF > build.json
+                - printf '{"tag":"%s", "taskdef", "%s"}' $TAG $TASK_DEF > build.json
           artifacts:
             files: build.json
       Environment:
