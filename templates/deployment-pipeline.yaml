@@ -156,7 +156,7 @@ Resources:
           artifacts:
             files: build.json
       Environment:
-        ComputeType: "BUILD_GENERAL1_MEDIUM"
+        ComputeType: "BUILD_GENERAL1_SMALL"
         Image: "aws/codebuild/docker:1.12.1"
         Type: "LINUX_CONTAINER"
         EnvironmentVariables:
