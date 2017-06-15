@@ -236,7 +236,7 @@ Resources:
                   {
                     "DesiredCount": "1",
                     "Cluster": "${Cluster}",
-                    "TaskDefinition" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "taskdef" ] 
+                    "TaskDefinition" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "taskdef" ] }
                   }
               InputArtifacts:
                 - Name: Template
