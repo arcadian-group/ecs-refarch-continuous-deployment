@@ -48,6 +48,7 @@ Resources:
         S3Bucket: !Ref S3Bucket
         SourceS3Key: !Ref SourceS3Key
         TemplateBucket: !Sub arc-ecs-cont-deployment-${AWS::Region}
+        TaskDef: !Ref TaskDef
 
 Outputs:
   PipelineUrl:
