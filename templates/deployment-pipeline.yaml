@@ -234,10 +234,8 @@ Resources:
                 RoleArn: !GetAtt CloudFormationExecutionRole.Arn
                 ParameterOverrides: !Sub |
                   {
-                    "Tag" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "tag" ] },
                     "DesiredCount": "1",
                     "Cluster": "${Cluster}",
-                    "Repository": "${Repository}",
                     "TaskDefinition" : { "Fn::GetParam" : [ "BuildOutput", "build.json", "taskdef" ] 
                   }
               InputArtifacts:
