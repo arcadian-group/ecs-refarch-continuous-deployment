@@ -18,11 +18,11 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterLabels:
       Cluster:
-        default: "Staging"
+        default: "ECS Cluster"
       S3Bucket:
-        default: "bitbucket-codeclimate-outputbucket-gmjmaqu04wuz"
+        default: "S3 Bucket"
       SourceS3Key:
-        default: "ArcadianDigital/mysmileplan/develop/ArcadianDigital_mysmileplan.zip"
+        default: "S3 File Path"
     ParameterGroups:
       - Label:
           default: Configuration
