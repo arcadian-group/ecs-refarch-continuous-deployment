@@ -14,6 +14,10 @@ Parameters:
     Type: String
     Description: Location of zip file in bucket
 
+  TaskDef:
+    Type: String
+    Description: Name of Task Def file
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterLabels:
@@ -23,6 +27,8 @@ Metadata:
         default: "S3 Bucket"
       SourceS3Key:
         default: "S3 File Path"
+      TaskDef:
+        default: "Task Def"
     ParameterGroups:
       - Label:
           default: Configuration
@@ -30,6 +36,7 @@ Metadata:
           - Cluster
           - S3Bucket
           - SourceS3Key
+          - TaskDef
 
 Resources:
   DeploymentPipeline:

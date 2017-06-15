@@ -11,6 +11,9 @@ Parameters:
   TemplateBucket:
     Type: String
 
+  TaskDef:
+    Type: String
+
 Resources:
   Repository:
     Type: AWS::ECR::Repository
@@ -149,10 +152,9 @@ Resources:
             post_build:
               commands:
                 - docker push "${REPOSITORY_URI}:${TAG}"
-                # TODO: Remove hardcoded taskdef
                 - FULL_IMAGE=$(echo "${REPOSITORY_URI}:${TAG}" | sed 's/\//\\\//g')
-                - sed -i "s/{{IMAGE}}/${FULL_IMAGE}/g" taskdef-staging.json
-                - TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://taskdef-staging.json | jq -r '.taskDefinition.taskDefinitionArn')
+                - sed -i "s/{{IMAGE}}/${FULL_IMAGE}/g" ${TASK_DEF_FILE}
+                - TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://${TASK_DEF_FILE} | jq -r '.taskDefinition.taskDefinitionArn')
                 - printf '{"tag":"%s", "taskdef":"%s"}' $TAG $TASK_DEF > build.json
           artifacts:
             files: build.json
@@ -165,6 +167,8 @@ Resources:
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
+          - Name: TASK_DEF_FILE
+            Value: !Ref TaskDef
       Name: !Ref AWS::StackName
       ServiceRole: !Ref CodeBuildServiceRole
 
