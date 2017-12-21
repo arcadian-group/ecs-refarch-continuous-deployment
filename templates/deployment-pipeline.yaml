@@ -1,8 +1,14 @@
 Parameters:
-  S3Bucket:
+  GitHubRepo:
     Type: String
 
-  SourceS3Key:
+  GitHubBranch:
+    Type: String
+
+  GitHubToken:
+    Type: String
+
+  GitHubUser:
     Type: String
 
   Cluster:
@@ -109,8 +115,6 @@ Resources:
                   - !Sub arn:aws:s3:::${ArtifactBucket}/*
                   - !Sub arn:aws:s3:::${TemplateBucket}
                   - !Sub arn:aws:s3:::${TemplateBucket}/*
-                  - !Sub arn:aws:s3:::${S3Bucket}
-                  - !Sub arn:aws:s3:::${S3Bucket}/*
                 Effect: Allow
                 Action:
                   - s3:PutObject
@@ -185,12 +189,14 @@ Resources:
             - Name: App
               ActionTypeId:
                 Category: Source
-                Owner: AWS
+                Owner: ThirdParty
                 Version: 1
-                Provider: S3
+                Provider: GitHub
               Configuration:
-                S3Bucket: !Ref 'S3Bucket'
-                S3ObjectKey: !Ref 'SourceS3Key'
+                Owner: !Ref GitHubUser
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubToken
               OutputArtifacts:
                 - Name: App
               RunOrder: 1
