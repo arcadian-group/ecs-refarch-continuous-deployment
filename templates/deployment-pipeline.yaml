@@ -17,6 +17,8 @@ Parameters:
   Service:
     Type: String
 
+  TaskDef:
+    Type: String
 
 Resources:
   Repository:
@@ -53,7 +55,9 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:GetObjectVersion
-              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+              - Resource: 
+                  - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+                  - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/base/wordpress
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -63,6 +67,7 @@ Resources:
                   - ecr:InitiateLayerUpload
                   - ecr:UploadLayerPart
                   - ecr:CompleteLayerUpload
+                  - ecs:RegisterTaskDefinition
 
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
@@ -123,13 +128,17 @@ Resources:
                 - $(aws ecr get-login)
                 - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
                 - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+                - apt-get update && apt-get install jq -y
             build:
               commands:
                 - docker build --tag "$IMAGE_URI" .
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
-                - printf '[{"name":"simple-app","imageUri":"%s"}]' "$IMAGE_URI" > images.json
+                - FULL_IMAGE=$(echo "${REPOSITORY_URI}:${TAG}" | sed 's/\//\\\//g')
+                - sed -i "s/{{IMAGE}}/${FULL_IMAGE}/g" ${TASK_DEF_FILE}
+                - TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://${TASK_DEF_FILE} | jq -r '.taskDefinition.taskDefinitionArn')
+                - printf '{"tag":"%s", "taskdef":"%s"}' $TAG $TASK_DEF > images.json
           artifacts:
             files: images.json
       Environment:
@@ -141,6 +150,8 @@ Resources:
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
+          - Name: TASK_DEF_FILE
+            Value: !Ref TaskDef
       Name: !Ref AWS::StackName
       ServiceRole: !Ref CodeBuildServiceRole
 
@@ -194,7 +205,7 @@ Resources:
               Configuration:
                 ClusterName: !Ref Cluster
                 ServiceName: !Ref Service
-                FileName: images.json
+                # FileName: images.json
               InputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1

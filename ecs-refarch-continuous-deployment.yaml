@@ -5,13 +5,20 @@ Description: >
 
 
 Parameters:
+  Cluster:
+    Type: String
+    Description: ECS Cluster to install on.
+
+  TaskDef:
+    Type: String
+    Description: Name of Task Def file
+
   GitHubUser:
     Type: String
     Description: Your username on GitHub.
 
   GitHubRepo:
     Type: String
-    Default: ecs-demo-php-simple-app
     Description: The repo name of the sample service.
 
   GitHubBranch:
@@ -47,59 +54,28 @@ Metadata:
 
 
 Resources:
-  Cluster:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: https://s3.amazonaws.com/ecs-refarch-continuous-deployment-v2-us-east-1/templates/ecs-cluster.yaml
-      Parameters:
-        SourceSecurityGroup: !GetAtt LoadBalancer.Outputs.SecurityGroup
-        Subnets: !GetAtt VPC.Outputs.Subnets
-        VpcId: !GetAtt VPC.Outputs.VpcId
-
   DeploymentPipeline:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/ecs-refarch-continuous-deployment-v2-us-east-1/templates/deployment-pipeline.yaml
+      TemplateURL: https://s3.amazonaws.com/arc-ecs-cont-deployment-ap-southeast-2/templates/deployment-pipeline.yaml
       Parameters:
-        Cluster: !GetAtt Cluster.Outputs.ClusterName
+        Cluster: !Ref Cluster
         Service: !GetAtt Service.Outputs.ServiceName
         GitHubUser: !Ref GitHubUser
         GitHubToken: !Ref GitHubToken
         GitHubRepo: !Ref GitHubRepo
         GitHubBranch: !Ref GitHubBranch
-
-  LoadBalancer:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: https://s3.amazonaws.com/ecs-refarch-continuous-deployment-v2-us-east-1/templates/load-balancer.yaml
-      Parameters:
-        Subnets: !GetAtt VPC.Outputs.Subnets
-        VpcId: !GetAtt VPC.Outputs.VpcId
-
-  VPC:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: https://s3.amazonaws.com/ecs-refarch-continuous-deployment-v2-us-east-1/templates/vpc.yaml
-      Parameters:
-        Name: !Ref AWS::StackName
-        VpcCIDR: 10.215.0.0/16
-        Subnet1CIDR: 10.215.10.0/24
-        Subnet2CIDR: 10.215.20.0/24
+        TaskDef: !Ref TaskDef
 
   Service:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/ecs-refarch-continuous-deployment-v2-us-east-1/templates/service.yaml
+      TemplateURL: https://s3.amazonaws.com/arc-ecs-cont-deployment-ap-southeast-2/templates/service.yaml
       Parameters:
-        Cluster: !GetAtt Cluster.Outputs.ClusterName
-        TargetGroup: !GetAtt LoadBalancer.Outputs.TargetGroup
-
+        Cluster: !Ref Cluster
+        TaskDef: !Ref TaskDef
 
 Outputs:
-  ServiceUrl:
-    Description: The sample service that is being continuously deployed.
-    Value: !GetAtt LoadBalancer.Outputs.ServiceUrl
-
   PipelineUrl:
     Description: The continuous deployment pipeline in the AWS Management Console.
     Value: !GetAtt DeploymentPipeline.Outputs.PipelineUrl
